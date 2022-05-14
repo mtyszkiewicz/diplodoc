@@ -1,37 +1,28 @@
 const SERVER_URL = "ws://10.0.0.3:8887";
 
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 function openWebSocket() {
     return new WebSocket(SERVER_URL);
 }
 
+let sessionId = null;
+let clientId = null;
+
 
 async function messageDispatcher(msg) {
-    console.log(JSON.parse(msg.data).inner);
     let inner = unwrap(JSON.parse(msg.data));
     let msgType = inner["type"];
+    console.log(msgType);
     let content = inner["content"];
+    console.log(content);
     switch (msgType) {
-        case "AckMessage":
-        document.getElementById("buf").value = content.buf;
-        break;
+        case "InitSessionMessage":
+            sessionId = content.session_id;
+            clientId = content.client_id;
+            break;
     }
-}
-
-
-function makeEventHandler(ws) {
-    function EventHandler(evt) {
-        pushMsg = {
-            "type": "PushMessage",
-            "content": {
-                "c": evt.data,
-                "pos": evt.target.selectionStart - 1,
-                "timestamp": 0
-            }
-        }
-        ws.send(JSON.stringify(wrap(pushMsg)))
-    }
-    return EventHandler;
 }
 
 
@@ -45,18 +36,23 @@ function unwrap(obj) {
 }
 
 
-function sendYoMessage(ws) {
-    ws.send(JSON.stringify(wrap({ "type": "YoMessage", "content": {} })))
+function sendCreateParagraphSessionMessage(ws) {
+    ws.send(JSON.stringify(wrap({
+        "type": "1CreateParagraphSessionMessage", "content": {
+            "session_id": sessionId,
+            "client_id": clientId,
+        }
+    })))
 }
 
 
 async function main() {
     const ws = openWebSocket();
     ws.onmessage = messageDispatcher;
-    ws.onopen = () => {
-        sendYoMessage(ws);
+    ws.onopen = async () => {
+        await sleep(1000);
+        for (let index = 0; index < 10; index++) {
+            sendCreateParagraphSessionMessage(ws);
+        }
     }
-    const buf = document.getElementById("buf");
-    buf.value = "";
-    buf.addEventListener("input", makeEventHandler(ws));
 }
