@@ -1,68 +1,129 @@
-from asyncio import Event, Queue
+import asyncio
 from dataclasses import dataclass, field
-from typing import Awaitable, Optional
+from uuid import UUID, uuid4
 
+from diplodoc.lock import Lock
+from diplodoc.lock.message import InitMessage, JoinMessage, LeaveMessage
 from diplodoc.message import (
-    AckMessage,
-    ClientToServerMessage,
-    PopMessage,
-    PushMessage,
-    ServerToClientMessage,
+    InitSessionMessage,
+    ParagraphGoneSessionMessage,
+    UpdatedParagraphSessionMessage,
 )
-from diplodoc.state import TextState
+
+
+@dataclass
+class Paragraph:
+    last_updated_by: UUID
+    paragraph_id: UUID = field(default_factory=uuid4)
+    lock: Lock = field(default_factory=Lock)
+    content: str = str()
 
 
 @dataclass
 class Session:
-    _text: TextState = field(default_factory=TextState)
-    _queue_c2s: Queue[tuple[Event, Event]] = field(default_factory=Queue)
-    # _timestamp: int = 0
-    # _last_seen: dict[int, int] = field(default_factory=dict)
+    session_id: UUID = field(default_factory=uuid4)
+    paragraphs: dict[UUID, Paragraph] = field(default_factory=dict)
+    client_ids: set[UUID] = field(default_factory=set)
 
-    async def _push_handler(
-        self, msg: PushMessage, start_event: Event, end_event: Event
-    ) -> AckMessage:
-        await start_event.wait()
-        self._text.push(msg.pos, msg.c)
-        end_event.set()
-        return AckMessage(
-            buf=str(self._text),
-            timestamp=0,  # TODO
+    async def join(
+        self, client_id: UUID
+    ) -> list[InitSessionMessage | UpdatedParagraphSessionMessage | InitMessage]:
+        """Creates all messages required to initialize the session."""
+        result = []
+
+        result.append(
+            InitSessionMessage(session_id=self.session_id, client_id=client_id)
         )
+        self.client_ids.add(client_id)
 
-    async def _pop_handler(
-        self, msg: PopMessage, start_event: Event, end_event: Event
-    ) -> AckMessage:
-        await start_event.wait()
-        self._text.pop(msg.pos)
-        end_event.set()
-        return AckMessage(
-            buf=str(self._text),
-            timestamp=0,  # TODO
+        for paragraph in self.paragraphs.values():
+            result.extend(
+                await paragraph.lock.handle(
+                    JoinMessage(lock_id=paragraph.lock.lock_id, client_id=client_id)
+                )
+            )
+            result.append(
+                UpdatedParagraphSessionMessage(
+                    session_id=self.session_id,
+                    paragraph_id=paragraph.paragraph_id,
+                    content=paragraph.content,
+                    client_id=client_id,
+                    updated_by=paragraph.last_updated_by,
+                )
+            )
+
+        return result
+
+    def update_paragraph(
+        self, paragraph_id: UUID, content: str, client_id: UUID
+    ) -> list[UpdatedParagraphSessionMessage]:
+        if self.paragraphs[paragraph_id].lock.locked_by != client_id:
+            raise RuntimeError("Inconsistent state.")
+
+        self.paragraphs[paragraph_id].content = content
+        self.paragraphs[paragraph_id].last_updated_by = client_id
+        return [
+            UpdatedParagraphSessionMessage(
+                session_id=self.session_id,
+                paragraph_id=paragraph_id,
+                content=content,
+                client_id=cid,
+                updated_by=client_id,
+            )
+            for cid in self.client_ids
+            if cid != client_id
+        ]
+
+    async def create_paragraph(
+        self, client_id: UUID
+    ) -> list[UpdatedParagraphSessionMessage | InitMessage]:
+        lock = Lock()
+        asyncio.create_task(lock.run())
+
+        paragraph = Paragraph(
+            paragraph_id=lock.lock_id,
+            lock=lock,
+            last_updated_by=client_id,
         )
+        self.paragraphs[paragraph.paragraph_id] = paragraph
 
-    def _schedule_handle(
-        self, msg: ClientToServerMessage
-    ) -> Awaitable[Optional[ClientToServerMessage]]:
-        start_ev = Event()
-        end_ev = Event()
-        match msg:
-            case PushMessage():
-                task = self._push_handler(msg, start_ev, end_ev)
-            case PopMessage():
-                task = self._pop_handler(msg, start_ev, end_ev)
-            case _:
-                assert False, "unreachable"
-        self._queue_c2s.put_nowait((start_ev, end_ev))
-        return task
+        result = []
+        for cid in self.client_ids:
+            result.extend(
+                await lock.handle(JoinMessage(lock_id=lock.lock_id, client_id=cid))
+            )
+            result.append(
+                UpdatedParagraphSessionMessage(
+                    session_id=self.session_id,
+                    paragraph_id=paragraph.paragraph_id,
+                    content=paragraph.content,
+                    client_id=cid,
+                    updated_by=client_id,
+                )
+            )
+        return result
 
-    async def run(self):
-        while True:
-            start_ev, end_ev = await self._queue_c2s.get()
-            start_ev.set()
-            await end_ev.wait()
+    async def delete_paragraph(
+        self, paragraph_id: UUID, client_id: UUID
+    ) -> list[ParagraphGoneSessionMessage]:
+        if paragraph_id not in self.paragraphs:
+            return []
 
-    async def handle(
-        self, msg: ClientToServerMessage
-    ) -> Optional[ServerToClientMessage]:
-        return await self._schedule_handle(msg)
+        del self.paragraphs[paragraph_id]
+        return [
+            ParagraphGoneSessionMessage(
+                session_id=self.session_id,
+                paragraph_id=paragraph_id,
+                client_id=cid,
+                deleted_by=client_id,
+            )
+            for cid in self.client_ids
+        ]
+
+    async def leave(self, client_id: UUID):
+        if client_id in self.client_ids:
+            set.remove(client_id)
+        for paragraph in self.paragraphs.values():
+            await paragraph.lock.handle(
+                LeaveMessage(lock_id=paragraph.paragraph_id, client_id=client_id)
+            )

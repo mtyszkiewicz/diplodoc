@@ -1,65 +1,75 @@
 from dataclasses import dataclass
-from typing import Union
+from typing import Protocol, Union
+
 
 from serde import AdjacentTagging, serde
+from uuid import uuid4, UUID
+
+# Server-side messages
+@serde
+@dataclass
+class InitSessionMessage:
+    session_id: UUID
+    client_id: UUID
 
 
 @serde
 @dataclass
-class PushMessage:
-    c: str
-    pos: int
-    timestamp: int
+class UpdatedParagraphSessionMessage:
+    session_id: UUID
+    paragraph_id: UUID
+    content: str
+    client_id: UUID
+    updated_by: UUID
+
+
+# Client-side messages
+@serde
+@dataclass
+class UpdateParagraphSessionMessage:
+    session_id: UUID
+    paragraph_id: UUID
+    content: str
+    client_id: UUID
 
 
 @serde
 @dataclass
-class PopMessage:
-    pos: int
-    timestamp: int
+class CreateParagraphSessionMessage:
+    session_id: UUID
+    client_id: UUID
 
 
 @serde
 @dataclass
-class YoMessage:
-    pass
-
-
-@serde
-@dataclass
-class AckMessage:
-    buf: str
-    timestamp: int
-
+class ParagraphGoneSessionMessage:
+    session_id: UUID
+    paragraph_id: UUID
+    client_id: UUID
+    deleted_by: UUID
 
 @serde
 @dataclass
-class HelloMessage:
-    client_token: str
-
-
-@serde
-@dataclass
-class HellAck:
-    pass  # TODO
-
-
-@serde
-@dataclass
-class LogMessage:
-    message: str
+class DeleteParagraphSessionMessage:
+    session_id: UUID
+    paragraph_id: UUID
+    client_id: UUID
 
 
 @serde(tagging=AdjacentTagging("type", "content"))
 @dataclass
-class ClientToServerMessage:
-    inner: Union[PushMessage, PopMessage, YoMessage]
+class ClientToServerSessionMessage:
+    inner: Union[UpdateParagraphSessionMessage, CreateParagraphSessionMessage, DeleteParagraphSessionMessage]
 
 
 @serde(tagging=AdjacentTagging("type", "content"))
 @dataclass
-class ServerToClientMessage:
-    inner: Union[AckMessage, HelloMessage, LogMessage]
+class ServerToClientSessionMessage:
+    inner: Union[InitSessionMessage, UpdatedParagraphSessionMessage, ParagraphGoneSessionMessage]
 
 
-Message = ClientToServerMessage | ServerToClientMessage
+SessionMessage = ClientToServerSessionMessage | ServerToClientSessionMessage
+
+
+class ClientDispachableMessage(Protocol):
+    client_id: UUID
