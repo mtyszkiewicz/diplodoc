@@ -46,14 +46,20 @@
                 locks[content.lock_id].status = determineLockState(
                     content.lock_id
                 );
+                locks[content.lock_id].trying = false;
                 break;
             case "BusyMessage":
                 locks[content.lock_id] = content;
                 locks[content.lock_id].status = "BUSY";
+                if (locks[content.lock_id].trying) {
+                    locks[content.lock_id].trying = false;
+                    putAlert("Another user is editing this document.")
+                }
                 break;
             case "ReadyMessage":
                 locks[content.lock_id].locked_by = clientId;
                 locks[content.lock_id].status = "EDITING";
+                locks[content.lock_id].trying = false;
                 break;
             case "FreedMessage":
                 locks[content.lock_id].locked_by = null;
@@ -121,7 +127,7 @@
     }
 
     function editParagraph(evt) {
-        paragraphs[evt.detail.paragraphId].status = "TRYING";
+        locks[evt.detail.paragraphId].trying = true;
         ws.send(
             JSON.stringify(
                 wrap({
@@ -176,6 +182,10 @@
 
     const ws = openWebSocket();
     ws.onmessage = messageDispatcher;
+    ws.onclose = () => {
+        sessionId = null;
+        putAlert("Connection lost.");
+    };
 </script>
 
 <main>
@@ -205,6 +215,7 @@
             Session ID: {sessionId} <br />
             Client ID: {clientId}
         </SmallText>
+    {/if}
         <section class="alerts">
             {#each Object.keys(alerts) as ak (ak)}
                 <section class="alert" in:slide out:slide>
@@ -214,7 +225,6 @@
                 </section>
             {/each}
         </section>
-    {/if}
 </main>
 
 <style>
