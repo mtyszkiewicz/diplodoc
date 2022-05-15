@@ -228,7 +228,6 @@
 </main>
 
 <style>
-    @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;600&display=swap");
     section.alert {
         margin: 1rem;
         padding: 1.5rem;

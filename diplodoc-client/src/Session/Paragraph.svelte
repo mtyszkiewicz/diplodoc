@@ -38,7 +38,7 @@
 </script>
 
 <section
-    in:slide={{ duration: 200 }}
+    in:slide={{ duration: 100 }}
     out:slide={{ duration: 200 }}
     class="paragraph"
 >
@@ -81,7 +81,7 @@
     {:else if state === "EDITABLE"}
         <section
             class="bottom"
-            in:slide={{ duration: 200 }}
+            in:slide={{ delay: 100, duration: 100 }}
             out:slide={{ duration: 200 }}
         >
             <section class="paragraph-id">
@@ -122,7 +122,7 @@
     }
 
     p {
-        margin-top: 0;
+        margin: 0;
         text-align: justify;
     }
 
