@@ -37,44 +37,30 @@
     }
 </script>
 
-<section in:slide out:slide class="paragraph">
+<section
+    in:slide={{ duration: 200 }}
+    out:slide={{ duration: 200 }}
+    class="paragraph"
+>
     {#if state === "EDITING"}
-        <span in:slide={{ delay: 100 }} out:slide={{ delay: 100 }}>
+        <span in:slide={{ duration: 200 }} out:slide={{ duration: 200 }}>
             <SmallText>PREVIEW</SmallText>
         </span>
     {/if}
-    <p in:slide={{ delay: 100 }} out:slide={{ delay: 100 }}>
+    <p in:slide={{ duration: 200 }} out:slide={{ duration: 200 }}>
         {content}
     </p>
     {#if state === "EDITING"}
-        <span in:slide={{ delay: 100 }} out:slide={{ delay: 100 }}>
+        <span in:slide={{ duration: 200 }} out:slide={{ duration: 200 }}>
             <SmallText>EDITOR</SmallText>
             <br />
             <textarea bind:value={content} cols="40" />
         </span>
-    {/if}
-    <br />
-    {#if state === "EDITABLE"}
+        <br />
         <section
             class="bottom"
-            in:slide={{ delay: 100 }}
-            out:slide={{ delay: 100 }}
-        >
-            <section class="paragraph-id">
-                <SmallText>Paragraph ID: {paragraphId}</SmallText>
-            </section>
-            <Button on:click={handleEdit}>
-                <span class="icon">
-                    <FaEdit />
-                </span>
-                Edit
-            </Button>
-        </section>
-    {:else if state == "EDITING"}
-        <section
-            class="bottom"
-            in:slide={{ delay: 100 }}
-            out:slide={{ delay: 100 }}
+            in:slide={{ duration: 200 }}
+            out:slide={{ duration: 200 }}
         >
             <section class="paragraph-id">
                 <SmallText>Paragraph ID: {paragraphId}</SmallText>
@@ -92,11 +78,27 @@
                 Save
             </RButton>
         </section>
+    {:else if state === "EDITABLE"}
+        <section
+            class="bottom"
+            in:slide={{ duration: 200 }}
+            out:slide={{ duration: 200 }}
+        >
+            <section class="paragraph-id">
+                <SmallText>Paragraph ID: {paragraphId}</SmallText>
+            </section>
+            <Button on:click={handleEdit}>
+                <span class="icon">
+                    <FaEdit />
+                </span>
+                Edit
+            </Button>
+        </section>
     {:else if state == "BUSY"}
         <section
             class="bottom"
-            in:slide={{ delay: 100 }}
-            out:slide={{ delay: 100 }}
+            in:slide={{ duration: 200 }}
+            out:slide={{ duration: 200 }}
         >
             <section class="paragraph-id">
                 <SmallText>Paragraph ID: {paragraphId}</SmallText> <br />
@@ -150,7 +152,7 @@
         height: 12rem;
         border-radius: 0.5rem;
         border-style: none;
-        box-shadow: 8px 8px 24px 0px rgba(66, 68, 90, 0.21);
+        box-shadow: 8px 8px 24px 0px rgba(66, 68, 90, 0.12);
         padding: 2rem;
     }
 </style>
