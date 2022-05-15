@@ -3,6 +3,7 @@ import sys
 from dataclasses import dataclass, field
 from typing import Iterable
 from uuid import UUID, uuid4
+from argparse import ArgumentParser
 
 import aiohttp
 import aiohttp.web
@@ -65,7 +66,7 @@ class Application:
                         except SerdeError:
                             print(f"Error: Could not parse message: {msg.data}")
                             continue
-                            
+
                     if isinstance(message, CreateParagraphSessionMessage):
                         await self._create_paragraph_handler(message)
 
@@ -77,7 +78,6 @@ class Application:
 
                     elif isinstance(message, DeleteParagraphSessionMessage):
                         await self._delete_paragraph_handler(message)
-
 
                 elif msg.type == aiohttp.WSMsgType.ERROR:
                     logging.info(
@@ -134,14 +134,24 @@ class Application:
     async def _lock_message_handler(self, message: TryMessage | FreeMessage):
         messages = await self._session.paragraphs[message.lock_id].lock.handle(message)
         await self._dispatch_and_send_messages(messages)
-    
+
     async def _delete_paragraph_handler(self, message: DeleteParagraphSessionMessage):
-        messages = await self._session.delete_paragraph(message.paragraph_id, message.client_id)
+        messages = await self._session.delete_paragraph(
+            message.paragraph_id, message.client_id
+        )
         await self._dispatch_and_send_messages(messages)
 
 
-if __name__ == "__main__":
+def main() -> None:
+    argparser = ArgumentParser(__name__)
+    argparser.add_argument("--host", type=str, default="0.0.0.0")
+    argparser.add_argument("--port", type=int, default=8887)
+    args = argparser.parse_args()
     app = aiohttp.web.Application()
     diplodoc_app = Application(app)
     app.add_routes([aiohttp.web.get("/", diplodoc_app.handler)])
-    aiohttp.web.run_app(app, host="10.0.0.3", port=8887)
+    aiohttp.web.run_app(app, host=args.host, port=args.port)
+
+
+if __name__ == "__main__":
+    main()
