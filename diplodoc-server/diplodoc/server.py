@@ -84,10 +84,10 @@ class Application:
                         f"WebSocket connection closed with exception {ws.exception()}"
                     )
         finally:
-            await ws.close()
             del self._client_sockets[client_id]
-            self._session.leave(client_id)
-            print(f"Disconnecting client {client_id}")
+            await ws.close()
+            await self._dispatch_and_send_messages(await self._session.leave(client_id))
+            print(f"Disconnected client {client_id}")
 
         logging.info("WebSocket connection closed")
         return ws
@@ -126,7 +126,7 @@ class Application:
         await self._dispatch_and_send_messages(messages)
 
     async def _update_paragraph_handler(self, message: UpdateParagraphSessionMessage):
-        messages = await self._session.update_paragraph(
+        messages = self._session.update_paragraph(
             message.paragraph_id, message.content, message.client_id
         )
         await self._dispatch_and_send_messages(messages)

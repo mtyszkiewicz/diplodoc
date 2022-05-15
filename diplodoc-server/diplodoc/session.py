@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from uuid import UUID, uuid4
 
 from diplodoc.lock import Lock
-from diplodoc.lock.message import InitMessage, JoinMessage, LeaveMessage
+from diplodoc.lock.message import FreedMessage, InitMessage, JoinMessage, LeaveMessage
 from diplodoc.message import (
     InitSessionMessage,
     ParagraphGoneSessionMessage,
@@ -71,7 +71,6 @@ class Session:
                 updated_by=client_id,
             )
             for cid in self.client_ids
-            if cid != client_id
         ]
 
     async def create_paragraph(
@@ -120,12 +119,17 @@ class Session:
             for cid in self.client_ids
         ]
 
-    async def leave(self, client_id: UUID):
+    async def leave(self, client_id: UUID) -> list[FreedMessage]:
         try:
             self.client_ids.remove(client_id)
         except KeyError:
             pass
+        result = []
         for paragraph in self.paragraphs.values():
-            await paragraph.lock.handle(
-                LeaveMessage(lock_id=paragraph.paragraph_id, client_id=client_id)
+            result.extend(
+                await paragraph.lock.handle(
+                    LeaveMessage(lock_id=paragraph.paragraph_id, client_id=client_id)
+                )
             )
+        print(result)
+        return result

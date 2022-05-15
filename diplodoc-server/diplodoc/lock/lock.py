@@ -1,4 +1,4 @@
-from asyncio import Event, Queue
+from asyncio import Event, Queue, create_task
 from dataclasses import dataclass, field
 from typing import Awaitable, Optional
 from uuid import UUID, uuid4
@@ -92,15 +92,27 @@ class Lock:
         self._client_ids.add(msg.client_id)
         end_event.set()
         return result
-    
+
     async def _leave_handler(
         self, msg: LeaveMessage, start_event: Event, end_event: Event
-    ) -> list:
+    ) -> list[FreedMessage]:
         await start_event.wait()
+        result = []
         if msg.client_id in self._client_ids:
             self._client_ids.remove(msg.client_id)
+        if self.locked_by == msg.client_id:
+            self.locked_by = None
+            result.extend(
+                [
+                    FreedMessage(
+                        lock_id=self.lock_id,
+                        client_id=cid,
+                    )
+                    for cid in self._client_ids
+                ]
+            )
         end_event.set()
-        return []
+        return result
 
     def _schedule_handle(
         self, msg: ClientToServerMessage | JoinMessage | LeaveMessage
