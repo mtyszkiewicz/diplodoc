@@ -103,7 +103,7 @@ class Lock:
         return []
 
     def _schedule_handle(
-        self, msg: ClientToServerMessage
+        self, msg: ClientToServerMessage | JoinMessage | LeaveMessage
     ) -> Awaitable[list[ServerToClientMessage]]:
         """Dispatch a message to the appropriate handler."""
         start_ev = Event()
@@ -129,6 +129,6 @@ class Lock:
             await end_ev.wait()
 
     async def handle(
-        self, msg: ClientToServerMessage | JoinMessage
+        self, msg: ClientToServerMessage | JoinMessage | LeaveMessage
     ) -> list[ServerToClientMessage]:
         return await self._schedule_handle(msg)

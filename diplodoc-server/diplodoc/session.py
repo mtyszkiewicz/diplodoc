@@ -121,8 +121,10 @@ class Session:
         ]
 
     async def leave(self, client_id: UUID):
-        if client_id in self.client_ids:
-            set.remove(client_id)
+        try:
+            self.client_ids.remove(client_id)
+        except KeyError:
+            pass
         for paragraph in self.paragraphs.values():
             await paragraph.lock.handle(
                 LeaveMessage(lock_id=paragraph.paragraph_id, client_id=client_id)
