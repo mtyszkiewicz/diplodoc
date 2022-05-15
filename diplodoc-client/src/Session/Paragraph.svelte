@@ -10,11 +10,13 @@
     import FaEdit from "svelte-icons/fa/FaEdit.svelte";
     import FaSave from "svelte-icons/fa/FaSave.svelte";
     import FaInfoCircle from "svelte-icons/fa/FaInfoCircle.svelte";
+    import snarkdown from "snarkdown";
 
     export let paragraphId;
     export let content: string = "";
     export let state: string;
     export let editedBy: string;
+    $: renderedContent = snarkdown(content);
 
     const dispath = createEventDispatcher();
 
@@ -48,7 +50,7 @@
         </span>
     {/if}
     <p in:slide={{ duration: 200 }} out:slide={{ duration: 200 }}>
-        {content}
+        {@html renderedContent}
     </p>
     {#if state === "EDITING"}
         <span in:slide={{ duration: 200 }} out:slide={{ duration: 200 }}>
