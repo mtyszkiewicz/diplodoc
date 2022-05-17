@@ -3,8 +3,11 @@ from dataclasses import dataclass, field
 from uuid import UUID, uuid4
 
 from diplodoc.lock import Lock
-from diplodoc.lock.message import FreedMessage, InitMessage, JoinMessage, LeaveMessage
 from diplodoc.message import (
+    InitMessage, 
+    JoinMessage, 
+    FreedMessage, 
+    LeaveMessage,
     InitSessionMessage,
     ParagraphGoneSessionMessage,
     UpdatedParagraphSessionMessage,

@@ -1,9 +1,9 @@
-from asyncio import Event, Queue, create_task
+from asyncio import Event, Queue
 from dataclasses import dataclass, field
 from typing import Awaitable, Optional
 from uuid import UUID, uuid4
 
-from diplodoc.lock.message import (
+from diplodoc.message import (
     BusyMessage,
     ClientToServerMessage,
     FreedMessage,
@@ -11,7 +11,6 @@ from diplodoc.lock.message import (
     InitMessage,
     JoinMessage,
     LeaveMessage,
-    Message,
     ReadyMessage,
     ServerToClientMessage,
     TryMessage,

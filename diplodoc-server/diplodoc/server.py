@@ -1,9 +1,9 @@
 import logging
 import sys
+from argparse import ArgumentParser
 from dataclasses import dataclass, field
 from typing import Iterable
 from uuid import UUID, uuid4
-from argparse import ArgumentParser
 
 import aiohttp
 import aiohttp.web
@@ -11,24 +11,15 @@ from rich import print
 from serde.compat import SerdeError
 from serde.json import from_json, to_json
 
-from diplodoc.lock.message import (
-    BusyMessage,
-    ClientToServerMessage,
-    FreedMessage,
-    FreeMessage,
-    InitMessage,
-    Message,
-    ReadyMessage,
-    ServerToClientMessage,
-    TryMessage,
-)
 from diplodoc.message import (
     ClientDispachableMessage,
-    ClientToServerSessionMessage,
+    ClientToServerMessage,
     CreateParagraphSessionMessage,
     DeleteParagraphSessionMessage,
-    ServerToClientSessionMessage,
-    SessionMessage,
+    FreeMessage,
+    Message,
+    ServerToClientMessage,
+    TryMessage,
     UpdateParagraphSessionMessage,
 )
 from diplodoc.session import Session
@@ -57,15 +48,10 @@ class Application:
             async for msg in ws:
                 if msg.type == aiohttp.WSMsgType.TEXT:
                     try:
-                        message = from_json(
-                            ClientToServerSessionMessage, msg.data
-                        ).inner
+                        message = from_json(ClientToServerMessage, msg.data).inner
                     except SerdeError:
-                        try:
-                            message = from_json(ClientToServerMessage, msg.data).inner
-                        except SerdeError:
-                            print(f"Error: Could not parse message: {msg.data}")
-                            continue
+                        print(f"Error: Could not parse message: {msg.data}")
+                        continue
 
                     if isinstance(message, CreateParagraphSessionMessage):
                         await self._create_paragraph_handler(message)
@@ -93,23 +79,12 @@ class Application:
         return ws
 
     @staticmethod
-    def _wrap(
-        message: Message | SessionMessage,
-    ) -> ServerToClientMessage | ServerToClientSessionMessage:
-        if isinstance(message, (InitMessage, ReadyMessage, BusyMessage, FreedMessage)):
-            return ServerToClientMessage(message)
-        else:
-            return ServerToClientSessionMessage(message)
-
-    @classmethod
     async def _send_messages(
-        cls,
         ws: aiohttp.web.WebSocketResponse,
-        messages: Iterable[Message | SessionMessage],
+        messages: Iterable[Message],
     ):
         for message in messages:
-            cls._wrap(message)
-            await ws.send_str(to_json(cls._wrap(message)))
+            await ws.send_str(to_json(ServerToClientMessage(message)))
 
     async def _dispatch_and_send_messages(
         self, messages: Iterable[ClientDispachableMessage]
