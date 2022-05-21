@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "./diplodoc-client"
+		},
+		{
+			"path": "./diplodoc-server"
+		}
+	],
+	"settings": {}
+}
