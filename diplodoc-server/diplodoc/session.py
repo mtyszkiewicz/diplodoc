@@ -80,8 +80,6 @@ class Session:
         self, client_id: UUID
     ) -> list[UpdatedParagraphSessionMessage | InitMessage]:
         lock = Lock()
-        asyncio.create_task(lock.run())
-
         paragraph = Paragraph(
             paragraph_id=lock.lock_id,
             lock=lock,
@@ -110,7 +108,6 @@ class Session:
     ) -> list[ParagraphGoneSessionMessage]:
         if paragraph_id not in self.paragraphs:
             return []
-
         del self.paragraphs[paragraph_id]
         return [
             ParagraphGoneSessionMessage(

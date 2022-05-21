@@ -12,11 +12,11 @@ from serde.compat import SerdeError
 from serde.json import from_json, to_json
 
 from diplodoc.message import (
-    ClientDispachableMessage,
     ClientToServerMessageWrapper,
     CreateParagraphSessionMessage,
     DeleteParagraphSessionMessage,
     FreeMessage,
+    ServerToClientMessage,
     ServerToClientMessageWrapper,
     TryMessage,
     UpdateParagraphSessionMessage,
@@ -80,13 +80,13 @@ class Application:
     @staticmethod
     async def _send_messages(
         ws: aiohttp.web.WebSocketResponse,
-        messages: Iterable[Message],
+        messages: Iterable[ServerToClientMessage],
     ):
         for message in messages:
             await ws.send_str(to_json(ServerToClientMessageWrapper(message)))
 
     async def _dispatch_and_send_messages(
-        self, messages: Iterable[ClientDispachableMessage]
+        self, messages: Iterable[ServerToClientMessage]
     ):
         for message in messages:
             try:

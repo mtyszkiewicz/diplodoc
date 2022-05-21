@@ -9,7 +9,6 @@
     import FaRegTrashAlt from "svelte-icons/fa/FaRegTrashAlt.svelte";
     import FaEdit from "svelte-icons/fa/FaEdit.svelte";
     import FaSave from "svelte-icons/fa/FaSave.svelte";
-    import FaInfoCircle from "svelte-icons/fa/FaInfoCircle.svelte";
     import snarkdown from "snarkdown";
 
     export let paragraphId;
@@ -22,19 +21,19 @@
 
     function handleDelete(evt) {
         evt.stopPropagation();
-        dispath("deleteParagraph", { paragraphId: paragraphId });
+        dispath("deleteParagraph", { paragraphId });
     }
 
     function handleEdit(evt) {
         evt.stopPropagation();
-        dispath("editParagraph", { paragraphId: paragraphId });
+        dispath("editParagraph", { paragraphId });
     }
 
     function handleSave(evt) {
         evt.stopPropagation();
         dispath("saveParagraph", {
-            paragraphId: paragraphId,
-            content: content,
+            paragraphId,
+            content,
         });
     }
 </script>
