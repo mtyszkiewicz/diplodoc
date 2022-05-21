@@ -13,12 +13,11 @@ from serde.json import from_json, to_json
 
 from diplodoc.message import (
     ClientDispachableMessage,
-    ClientToServerMessage,
+    ClientToServerMessageWrapper,
     CreateParagraphSessionMessage,
     DeleteParagraphSessionMessage,
     FreeMessage,
-    Message,
-    ServerToClientMessage,
+    ServerToClientMessageWrapper,
     TryMessage,
     UpdateParagraphSessionMessage,
 )
@@ -48,7 +47,7 @@ class Application:
             async for msg in ws:
                 if msg.type == aiohttp.WSMsgType.TEXT:
                     try:
-                        message = from_json(ClientToServerMessage, msg.data).inner
+                        message = from_json(ClientToServerMessageWrapper, msg.data).inner
                     except SerdeError:
                         print(f"Error: Could not parse message: {msg.data}")
                         continue
@@ -84,7 +83,7 @@ class Application:
         messages: Iterable[Message],
     ):
         for message in messages:
-            await ws.send_str(to_json(ServerToClientMessage(message)))
+            await ws.send_str(to_json(ServerToClientMessageWrapper(message)))
 
     async def _dispatch_and_send_messages(
         self, messages: Iterable[ClientDispachableMessage]
