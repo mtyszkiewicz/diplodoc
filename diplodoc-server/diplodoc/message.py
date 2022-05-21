@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from typing import Optional, Protocol, Union
 
 
-from serde import AdjacentTagging, serde
+from serde import serde
+from serde.core import AdjacentTagging
 from uuid import UUID
 
 
@@ -115,33 +116,42 @@ class LeaveMessage:
     client_id: UUID
 
 
-@serde(tagging=AdjacentTagging("type", "content"))
+ClientToServerMessage = Union[
+    FreeMessage,
+    TryMessage,
+    CreateParagraphSessionMessage,
+    UpdateParagraphSessionMessage,
+    DeleteParagraphSessionMessage,
+]
+
+
+@serde(
+    tagging=AdjacentTagging("@type", "@content"),
+    rename_all="camelcase",
+)
 @dataclass
-class ClientToServerMessage:
-    inner: Union[
-        FreeMessage,
-        TryMessage,
-        CreateParagraphSessionMessage,
-        UpdateParagraphSessionMessage,
-        DeleteParagraphSessionMessage,
-    ]
+class ClientToServerMessageWrapper:
+    inner: ClientToServerMessage
 
 
-@serde(tagging=AdjacentTagging("type", "content"))
+ServerToClientMessage = Union[
+    InitMessage,
+    ReadyMessage,
+    BusyMessage,
+    FreedMessage,
+    InitSessionMessage,
+    UpdatedParagraphSessionMessage,
+    ParagraphGoneSessionMessage,
+]
+
+
+@serde(
+    tagging=AdjacentTagging("@type", "@content"),
+    rename_all="camelcase",
+)
 @dataclass
-class ServerToClientMessage:
-    inner: Union[
-        InitMessage,
-        ReadyMessage,
-        BusyMessage,
-        FreedMessage,
-        InitSessionMessage, 
-        UpdatedParagraphSessionMessage, 
-        ParagraphGoneSessionMessage,
-    ]
-
-
-Message = ClientToServerMessage | ServerToClientMessage
+class ServerToClientMessageWrapper:
+    inner: ServerToClientMessage
 
 
 class ClientDispachableMessage(Protocol):

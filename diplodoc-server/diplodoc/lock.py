@@ -5,14 +5,14 @@ from uuid import UUID, uuid4
 
 from diplodoc.message import (
     BusyMessage,
-    ClientToServerMessage,
+    ClientToServerMessageWrapper,
     FreedMessage,
     FreeMessage,
     InitMessage,
     JoinMessage,
     LeaveMessage,
     ReadyMessage,
-    ServerToClientMessage,
+    ServerToClientMessageWrapper,
     TryMessage,
 )
 
@@ -114,8 +114,8 @@ class Lock:
         return result
 
     def _schedule_handle(
-        self, msg: ClientToServerMessage | JoinMessage | LeaveMessage
-    ) -> Awaitable[list[ServerToClientMessage]]:
+        self, msg: ClientToServerMessageWrapperWrapper | JoinMessage | LeaveMessage
+    ) -> Awaitable[list[ServerToClientMessageWrapper]]:
         """Dispatch a message to the appropriate handler."""
         start_ev = Event()
         end_ev = Event()
@@ -140,6 +140,6 @@ class Lock:
             await end_ev.wait()
 
     async def handle(
-        self, msg: ClientToServerMessage | JoinMessage | LeaveMessage
-    ) -> list[ServerToClientMessage]:
+        self, msg: ClientToServerMessageWrapperWrapper | JoinMessage | LeaveMessage
+    ) -> list[ServerToClientMessageWrapper]:
         return await self._schedule_handle(msg)
