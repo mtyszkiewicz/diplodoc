@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Protocol, Union
+from typing import Optional, Union
 
 
 from serde import serde
@@ -8,28 +8,28 @@ from uuid import UUID
 
 
 ## Client-to-server messages
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class FreeMessage:
     lock_id: UUID
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class TryMessage:
     lock_id: UUID
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class CreateParagraphSessionMessage:
     session_id: UUID
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class UpdateParagraphSessionMessage:
     session_id: UUID
@@ -38,7 +38,7 @@ class UpdateParagraphSessionMessage:
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class DeleteParagraphSessionMessage:
     session_id: UUID
@@ -46,7 +46,7 @@ class DeleteParagraphSessionMessage:
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class ParagraphGoneSessionMessage:
     session_id: UUID
@@ -56,7 +56,7 @@ class ParagraphGoneSessionMessage:
 
 
 ## Server-to-client messages
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class InitMessage:
     lock_id: UUID
@@ -64,14 +64,14 @@ class InitMessage:
     locked_by: Optional[UUID] = None
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class ReadyMessage:
     lock_id: UUID
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class BusyMessage:
     lock_id: UUID
@@ -79,21 +79,21 @@ class BusyMessage:
     locked_by: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class FreedMessage:
     lock_id: UUID
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class InitSessionMessage:
     session_id: UUID
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class UpdatedParagraphSessionMessage:
     session_id: UUID
@@ -152,7 +152,3 @@ ServerToClientMessage = Union[
 @dataclass
 class ServerToClientMessageWrapper:
     inner: ServerToClientMessage
-
-
-class ClientDispachableMessage(Protocol):
-    client_id: UUID
