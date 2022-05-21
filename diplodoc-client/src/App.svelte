@@ -127,6 +127,9 @@
     }
 
     function editParagraph(evt) {
+        if(locks[evt.detail.paragraphId].locked_by == clientId || locks[evt.detail.paragraph_id].trying) {
+            return;
+        }
         locks[evt.detail.paragraphId].trying = true;
         ws.send(
             JSON.stringify(
