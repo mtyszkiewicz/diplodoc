@@ -41,7 +41,7 @@ class Session:
 
         for paragraph in self.paragraphs.values():
             result.extend(
-                await paragraph.lock.handle(
+                paragraph.lock.handle(
                     JoinMessage(lock_id=paragraph.lock.lock_id, client_id=client_id)
                 )
             )
@@ -90,7 +90,7 @@ class Session:
         result = []
         for cid in self.client_ids:
             result.extend(
-                await lock.handle(JoinMessage(lock_id=lock.lock_id, client_id=cid))
+                lock.handle(JoinMessage(lock_id=lock.lock_id, client_id=cid))
             )
             result.append(
                 UpdatedParagraphSessionMessage(
@@ -127,9 +127,8 @@ class Session:
         result = []
         for paragraph in self.paragraphs.values():
             result.extend(
-                await paragraph.lock.handle(
+                paragraph.lock.handle(
                     LeaveMessage(lock_id=paragraph.paragraph_id, client_id=client_id)
                 )
             )
-        print(result)
         return result
