@@ -106,7 +106,7 @@ class Application:
         await self._dispatch_and_send_messages(messages)
 
     async def _lock_message_handler(self, message: TryMessage | FreeMessage):
-        messages = await self._session.paragraphs[message.lock_id].lock.handle(message)
+        messages = self._session.paragraphs[message.lock_id].lock.handle(message)
         await self._dispatch_and_send_messages(messages)
 
     async def _delete_paragraph_handler(self, message: DeleteParagraphSessionMessage):

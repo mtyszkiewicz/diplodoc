@@ -20,10 +20,6 @@ class Lock:
     lock_id: UUID = field(default_factory=uuid4)
     locked_by: Optional[UUID] = None
     _client_ids: set[UUID] = field(default_factory=set)
-    _last_task_end: Event = field(default_factory=Event)
-
-    def __post_init__(self):
-        self._last_task_end.set()
 
     def _try_handler(self, msg: TryMessage) -> list[ReadyMessage | BusyMessage]:
         """Handle the locking for both busy and free lock.
@@ -46,7 +42,7 @@ class Lock:
                         locked_by=self.locked_by,
                     )
                 )
-        else:
+        elif self.locked_by != msg.client_id:
             result.append(
                 BusyMessage(
                     lock_id=self.lock_id,
@@ -99,29 +95,19 @@ class Lock:
 
     def handle(
         self, msg: TryMessage | FreeMessage | JoinMessage | LeaveMessage
-    ) -> Awaitable[
-        list[ReadyMessage | BusyMessage] | list[InitMessage] | list[FreedMessage]
-    ]:
+    ) -> list[ReadyMessage | BusyMessage] | list[InitMessage] | list[FreedMessage]:
         """Dispatch a message to the appropriate handler."""
-        prev_task_end = self._last_task_end
-        self._last_task_end = cur_task_end = Event()
 
         match msg:
             case TryMessage():
-                result_thunk = lambda: self._try_handler(msg)
+                result = self._try_handler(msg)
             case FreeMessage():
-                result_thunk = lambda: self._free_handler(msg)
+                result = self._free_handler(msg)
             case JoinMessage():
-                result_thunk = lambda: self._join_handler(msg)
+                result = self._join_handler(msg)
             case LeaveMessage():
-                result_thunk = lambda: self._leave_handler(msg)
+                result = self._leave_handler(msg)
             case _:
                 assert False, "unreachable"
         
-        async def task():
-            await prev_task_end.wait()
-            result = result_thunk()
-            cur_task_end.set()
-            return result
-
-        return task()
+        return result

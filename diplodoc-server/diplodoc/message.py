@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Union
 
 
@@ -46,6 +46,7 @@ class DeleteParagraphSessionMessage:
     client_id: UUID
 
 
+## Server-to-client messages
 @serde(rename_all="camelcase")
 @dataclass
 class ParagraphGoneSessionMessage:
@@ -55,7 +56,6 @@ class ParagraphGoneSessionMessage:
     deleted_by: UUID
 
 
-## Server-to-client messages
 @serde(rename_all="camelcase")
 @dataclass
 class InitMessage:
@@ -151,4 +151,4 @@ ServerToClientMessage = Union[
 )
 @dataclass
 class ServerToClientMessageWrapper:
-    inner: ServerToClientMessage
+    inner: ServerToClientMessage = field(metadata={"serde_rename": "@inner"})

@@ -8,7 +8,7 @@
     import Paragraph from "./Session/Paragraph.svelte";
     import SmallText from "./SmallText.svelte";
 
-    const SERVER_URL = "ws://localhost:8887";
+    const SERVER_URL = "ws://10.0.0.1:8887";
 
     function openWebSocket() {
         return new WebSocket(SERVER_URL);
@@ -199,7 +199,7 @@
                 paragraphId={pid}
                 state={locks[pid].status}
                 content={paragraphs[pid].content}
-                editedBy={locks[pid].locked_by}
+                editedBy={locks[pid].lockedBy}
                 on:deleteParagraph={deleteParagraph}
                 on:editParagraph={editParagraph}
                 on:saveParagraph={saveParagraph}
