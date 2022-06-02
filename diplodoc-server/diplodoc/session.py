@@ -10,6 +10,7 @@ from diplodoc.message import (
     LeaveMessage,
     InitSessionMessage,
     ParagraphGoneSessionMessage,
+    ReorderedParagraphsSessionMessage,
     UpdatedParagraphSessionMessage,
 )
 
@@ -26,6 +27,7 @@ class Paragraph:
 class Session:
     session_id: UUID = field(default_factory=uuid4)
     paragraphs: dict[UUID, Paragraph] = field(default_factory=dict)
+    paragraphs_order: list[UUID] = field(default_factory=list)
     client_ids: set[UUID] = field(default_factory=set)
 
     async def join(
@@ -118,6 +120,23 @@ class Session:
             )
             for cid in self.client_ids
         ]
+
+    async def reorder_paragraphs(
+        self, paragraphs_order: list[UUID], client_id: UUID
+    ) -> list[ReorderedParagraphsSessionMessage]:
+        if set(paragraphs_order) != set(self.paragraphs.keys()):
+            raise RuntimeError("Inconsistent state.")
+        self.paragraphs_order = paragraphs_order
+        return [
+            ReorderedParagraphsSessionMessage(
+                session_id=self.session_id,
+                paragraphs_order=paragraphs_order,
+                client_id=cid,
+                reordered_by=client_id,
+            )
+            for cid in self.client_ids
+        ]
+    
 
     async def leave(self, client_id: UUID) -> list[FreedMessage]:
         try:

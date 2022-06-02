@@ -16,6 +16,7 @@ from diplodoc.message import (
     CreateParagraphSessionMessage,
     DeleteParagraphSessionMessage,
     FreeMessage,
+    ReorderParagraphsSessionMessage,
     ServerToClientMessage,
     ServerToClientMessageWrapper,
     TryMessage,
@@ -63,6 +64,9 @@ class Application:
 
                     elif isinstance(message, DeleteParagraphSessionMessage):
                         await self._delete_paragraph_handler(message)
+
+                    elif isinstance(message, ReorderParagraphsSessionMessage):
+                        await self._reorder_paragraphs_handler(message)
 
                 elif msg.type == aiohttp.WSMsgType.ERROR:
                     logging.info(
@@ -112,6 +116,12 @@ class Application:
     async def _delete_paragraph_handler(self, message: DeleteParagraphSessionMessage):
         messages = await self._session.delete_paragraph(
             message.paragraph_id, message.client_id
+        )
+        await self._dispatch_and_send_messages(messages)
+
+    async def _reorder_paragraphs_handler(self, message: ReorderParagraphsSessionMessage):
+        messages = await self._session.reorder_paragraphs(
+            message.paragraphs_order, message.client_id
         )
         await self._dispatch_and_send_messages(messages)
 

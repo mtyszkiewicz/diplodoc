@@ -55,6 +55,23 @@ class ParagraphGoneSessionMessage:
     deleted_by: UUID
 
 
+@serde(rename_all="camelcase")
+@dataclass
+class ReorderParagraphsSessionMessage:
+    session_id: UUID
+    paragraphs_order: list[UUID]
+    client_id: UUID
+
+
+@serde(rename_all="camelcase")
+@dataclass
+class ReorderedParagraphsSessionMessage:
+    session_id: UUID
+    paragraphs_order: list[UUID]
+    client_id: UUID
+    reordered_by: UUID
+
+
 ## Server-to-client messages
 @serde(rename_all="camelcase")
 @dataclass
@@ -122,6 +139,7 @@ ClientToServerMessage = Union[
     CreateParagraphSessionMessage,
     UpdateParagraphSessionMessage,
     DeleteParagraphSessionMessage,
+    ReorderParagraphsSessionMessage,
 ]
 
 
@@ -142,6 +160,7 @@ ServerToClientMessage = Union[
     InitSessionMessage,
     UpdatedParagraphSessionMessage,
     ParagraphGoneSessionMessage,
+    ReorderedParagraphsSessionMessage,
 ]
 
 
