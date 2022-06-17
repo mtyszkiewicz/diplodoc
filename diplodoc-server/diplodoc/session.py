@@ -79,7 +79,7 @@ class Session:
     async def create_paragraph(
         self, client_id: UUID
     ) -> list[UpdatedParagraphSessionMessage | InitMessage]:
-        lock = Lock()
+        lock = Lock(locked_by=client_id)
         paragraph = Paragraph(
             paragraph_id=lock.lock_id,
             lock=lock,
