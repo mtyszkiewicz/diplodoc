@@ -11,8 +11,8 @@
         border-color: #333;
         font-weight: 600;
         padding-bottom: 0.5rem;
-        padding-left: 2rem;
-        padding-right: 2rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
         padding-top: 0.5rem;
     }
 

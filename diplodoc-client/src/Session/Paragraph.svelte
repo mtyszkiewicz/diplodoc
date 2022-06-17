@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import { slide, fly } from "svelte/transition";
+    import { slide, fade } from "svelte/transition";
     import LButton from "../LButton.svelte";
     import Button from "../Button.svelte";
     import RButton from "../RButton.svelte";
@@ -15,7 +15,9 @@
     export let content: string = "";
     export let state: string;
     export let editedBy: string;
+    let editElement: HTMLParagraphElement;
     $: renderedContent = snarkdown(content);
+    $: editElement === undefined || editElement === null || (editElement.innerText = content)
 
     const dispath = createEventDispatcher();
 
@@ -33,76 +35,55 @@
         evt.stopPropagation();
         dispath("saveParagraph", {
             paragraphId,
-            content,
+            content: editElement.innerText,
         });
     }
 </script>
 
 <section
-    in:slide={{ duration: 100 }}
-    out:slide={{ duration: 200 }}
     class="paragraph"
+    class:paragraph-hover={state == "EDITABLE"}
+    on:click={handleEdit}
 >
-    {#if state === "EDITING"}
-        <span in:slide={{ duration: 200 }} out:slide={{ duration: 200 }}>
-            <SmallText>PREVIEW</SmallText>
-        </span>
+    {#if state === "EDITABLE" || state === "BUSY"}
+        <p in:slide={{ duration: 200 }} out:slide={{ duration: 200 }}>
+            {@html renderedContent}
+        </p>
     {/if}
-    <p in:slide={{ duration: 200 }} out:slide={{ duration: 200 }}>
-        {@html renderedContent}
-    </p>
     {#if state === "EDITING"}
-        <span in:slide={{ duration: 200 }} out:slide={{ duration: 200 }}>
-            <SmallText>EDITOR</SmallText>
-            <br />
-            <textarea bind:value={content} cols="40" />
-        </span>
-        <br />
+        <p
+            contenteditable
+            class="editing"
+            bind:this={editElement}
+            in:slide={{ duration: 200 }}
+            out:slide={{ duration: 200 }}
+        />
         <section
             class="bottom"
             in:slide={{ duration: 200 }}
             out:slide={{ duration: 200 }}
         >
-            <section class="paragraph-id">
-                <SmallText>Paragraph ID: {paragraphId}</SmallText>
-            </section>
             <LButton on:click={handleDelete}>
                 <span class="icon">
                     <FaRegTrashAlt />
                 </span>
-                Delete
             </LButton>
             <RButton on:click={handleSave}>
                 <span class="icon">
                     <FaSave />
                 </span>
-                Save
             </RButton>
-        </section>
-    {:else if state === "EDITABLE"}
-        <section
-            class="bottom"
-            in:slide={{ delay: 100, duration: 100 }}
-            out:slide={{ duration: 200 }}
-        >
-            <section class="paragraph-id">
-                <SmallText>Paragraph ID: {paragraphId}</SmallText>
-            </section>
-            <Button on:click={handleEdit}>
-                <span class="icon">
-                    <FaEdit />
-                </span>
-                Edit
-            </Button>
         </section>
     {:else if state == "BUSY"}
         <section
-            class="bottom"
+            class="bottom busy"
             in:slide={{ duration: 200 }}
             out:slide={{ duration: 200 }}
         >
-            <section class="paragraph-id">
-                <SmallText>Paragraph ID: {paragraphId}</SmallText> <br />
+            <section
+                class="paragraph-id"
+                in:fade={{ duration: 200, delay: 200 }}
+            >
                 <SmallText>
                     Client {editedBy} is editing this paragraph
                 </SmallText>
@@ -113,21 +94,37 @@
 
 <style>
     .paragraph {
-        border-radius: 2rem;
-        box-shadow: 8px 8px 24px 0px rgba(66, 68, 90, 0.21);
-        margin: 2rem 0;
-        padding: 2rem;
+        margin: 0;
+        padding: 0;
         display: flex;
         flex-direction: column;
         width: 100%;
+        transition: 300ms;
+    }
+
+    section.bottom.busy {
+        height: 0;
+        margin: 0;
+    }
+
+    .paragraph-hover:hover {
+        background-color: #f5f5f5;
     }
 
     p {
-        margin: 0;
-        text-align: justify;
+        margin: 2rem;
+        /* text-align: justify; */
+        padding: 1rem;
+    }
+
+    p.editing {
+        outline: 1px solid #ececec;
+        border-radius: 0.25rem;
     }
 
     .bottom {
+        margin: 2rem;
+        margin-top: 0;
         display: flex;
         flex-direction: row;
         align-items: flex-end;
@@ -140,8 +137,8 @@
     }
 
     .paragraph-id {
-        justify-self: start;
-        flex-grow: 1;
+        position: relative;
+        right: -20rem;
     }
 
     textarea {
@@ -155,5 +152,12 @@
         border-style: none;
         box-shadow: 8px 8px 24px 0px rgba(66, 68, 90, 0.12);
         padding: 2rem;
+    }
+
+    .editor {
+        width: 100%;
+        margin-left: -2rem;
+        margin-right: -2rem;
+        box-sizing: content-box;
     }
 </style>

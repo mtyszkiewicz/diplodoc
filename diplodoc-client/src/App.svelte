@@ -67,7 +67,7 @@
                 break;
             case "UpdatedParagraphSessionMessage":
                 paragraphs[content.paragraphId] = content;
-                if (content.updated_by === clientId) {
+                if (content.updatedBy === clientId) {
                     putAlert(
                         `Paragraph ${content.paragraphId} saved successfully.`
                     );
@@ -191,40 +191,42 @@
 <main>
     <Logo />
     {#if sessionId}
-        {#each Object.keys(paragraphs) as pid (pid)}
-            <Paragraph
-                paragraphId={pid}
-                state={locks[pid].status}
-                content={paragraphs[pid].content}
-                editedBy={locks[pid].lockedBy}
-                on:deleteParagraph={deleteParagraph}
-                on:editParagraph={editParagraph}
-                on:saveParagraph={saveParagraph}
-            />
-        {/each}
+        <section
+            class="paragraphs-shadow"
+        >
+            {#each Object.keys(paragraphs) as pid (pid)}
+                <Paragraph
+                    paragraphId={pid}
+                    state={locks[pid].status}
+                    content={paragraphs[pid].content}
+                    editedBy={locks[pid].lockedBy}
+                    on:deleteParagraph={deleteParagraph}
+                    on:editParagraph={editParagraph}
+                    on:saveParagraph={saveParagraph}
+                />
+            {/each}
+        </section>
         <section class="new-paragraph-container">
             <Button on:click={sendCreateParagraphSessionMessage}>
                 <span class="icon">
                     <FaPlus />
                 </span>
-                New paragraph
             </Button>
         </section>
         <SmallText>
-            <br />
             Session ID: {sessionId} <br />
             Client ID: {clientId}
         </SmallText>
     {/if}
-        <section class="alerts">
-            {#each Object.keys(alerts) as ak (ak)}
-                <section class="alert" in:slide out:slide>
-                    <span class="icon">
-                        <FaInfoCircle />
-                    </span>&nbsp;&nbsp;{alerts[ak]}
-                </section>
-            {/each}
-        </section>
+    <section class="alerts">
+        {#each Object.keys(alerts) as ak (ak)}
+            <section class="alert" in:slide out:slide>
+                <span class="icon">
+                    <FaInfoCircle />
+                </span>&nbsp;&nbsp;{alerts[ak]}
+            </section>
+        {/each}
+    </section>
 </main>
 
 <style>
@@ -245,6 +247,17 @@
         flex-direction: column;
         align-items: flex-end;
         justify-items: flex-end;
+    }
+
+    .paragraphs-shadow {
+        border-radius: 0.5rem;
+        box-shadow: 8px 8px 24px 0px rgba(66, 68, 90, 0.4);
+        margin: 0;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        padding: 0;
+        width: 100%;
+        block-size: fit-content;
     }
 
     main {
