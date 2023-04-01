@@ -8,7 +8,7 @@
     import Paragraph from "./Session/Paragraph.svelte";
     import SmallText from "./SmallText.svelte";
 
-    const SERVER_URL = "ws://192.168.1.10:8887";
+    const SERVER_URL = "ws://10.0.0.1:8887";
 
     function openWebSocket() {
         return new WebSocket(SERVER_URL);
