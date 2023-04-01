@@ -56,7 +56,6 @@ The `Lock` class has a unique identifier, a reference to the client holding the 
 The `handle()` method serves as a dispatcher that directs incoming messages to the appropriate handler based on the message type.
 
 ## message.py
-## message.py Module Summary
 
 The message.py module is responsible for defining the various message types used for communication between clients and the server in the Diplodoc application. The messages facilitate collaboration on documents and help manage the locking mechanism for paragraphs.
 
