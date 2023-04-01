@@ -12,13 +12,12 @@ from serde.compat import SerdeError
 from serde.json import from_json, to_json
 
 from diplodoc.message import (
-    ClientDispachableMessage,
-    ClientToServerMessage,
+    ClientToServerMessageWrapper,
     CreateParagraphSessionMessage,
     DeleteParagraphSessionMessage,
     FreeMessage,
-    Message,
     ServerToClientMessage,
+    ServerToClientMessageWrapper,
     TryMessage,
     UpdateParagraphSessionMessage,
 )
@@ -48,7 +47,7 @@ class Application:
             async for msg in ws:
                 if msg.type == aiohttp.WSMsgType.TEXT:
                     try:
-                        message = from_json(ClientToServerMessage, msg.data).inner
+                        message = from_json(ClientToServerMessageWrapper, msg.data).inner
                     except SerdeError:
                         print(f"Error: Could not parse message: {msg.data}")
                         continue
@@ -81,13 +80,13 @@ class Application:
     @staticmethod
     async def _send_messages(
         ws: aiohttp.web.WebSocketResponse,
-        messages: Iterable[Message],
+        messages: Iterable[ServerToClientMessage],
     ):
         for message in messages:
-            await ws.send_str(to_json(ServerToClientMessage(message)))
+            await ws.send_str(to_json(ServerToClientMessageWrapper(message)))
 
     async def _dispatch_and_send_messages(
-        self, messages: Iterable[ClientDispachableMessage]
+        self, messages: Iterable[ServerToClientMessage]
     ):
         for message in messages:
             try:
@@ -107,7 +106,7 @@ class Application:
         await self._dispatch_and_send_messages(messages)
 
     async def _lock_message_handler(self, message: TryMessage | FreeMessage):
-        messages = await self._session.paragraphs[message.lock_id].lock.handle(message)
+        messages = self._session.paragraphs[message.lock_id].lock.handle(message)
         await self._dispatch_and_send_messages(messages)
 
     async def _delete_paragraph_handler(self, message: DeleteParagraphSessionMessage):

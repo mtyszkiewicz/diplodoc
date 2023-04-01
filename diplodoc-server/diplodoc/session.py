@@ -41,7 +41,7 @@ class Session:
 
         for paragraph in self.paragraphs.values():
             result.extend(
-                await paragraph.lock.handle(
+                paragraph.lock.handle(
                     JoinMessage(lock_id=paragraph.lock.lock_id, client_id=client_id)
                 )
             )
@@ -79,9 +79,7 @@ class Session:
     async def create_paragraph(
         self, client_id: UUID
     ) -> list[UpdatedParagraphSessionMessage | InitMessage]:
-        lock = Lock()
-        asyncio.create_task(lock.run())
-
+        lock = Lock(locked_by=client_id)
         paragraph = Paragraph(
             paragraph_id=lock.lock_id,
             lock=lock,
@@ -92,7 +90,7 @@ class Session:
         result = []
         for cid in self.client_ids:
             result.extend(
-                await lock.handle(JoinMessage(lock_id=lock.lock_id, client_id=cid))
+                lock.handle(JoinMessage(lock_id=lock.lock_id, client_id=cid))
             )
             result.append(
                 UpdatedParagraphSessionMessage(
@@ -110,7 +108,6 @@ class Session:
     ) -> list[ParagraphGoneSessionMessage]:
         if paragraph_id not in self.paragraphs:
             return []
-
         del self.paragraphs[paragraph_id]
         return [
             ParagraphGoneSessionMessage(
@@ -130,9 +127,8 @@ class Session:
         result = []
         for paragraph in self.paragraphs.values():
             result.extend(
-                await paragraph.lock.handle(
+                paragraph.lock.handle(
                     LeaveMessage(lock_id=paragraph.paragraph_id, client_id=client_id)
                 )
             )
-        print(result)
         return result

@@ -1,5 +1,5 @@
 <small>
-    <slot></slot>
+    <slot />
 </small>
 
 <style>

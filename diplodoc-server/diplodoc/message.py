@@ -1,34 +1,35 @@
-from dataclasses import dataclass
-from typing import Optional, Protocol, Union
+from dataclasses import dataclass, field
+from typing import Optional, Union
 
 
-from serde import AdjacentTagging, serde
+from serde import serde
+from serde.core import AdjacentTagging
 from uuid import UUID
 
 
 ## Client-to-server messages
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class FreeMessage:
     lock_id: UUID
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class TryMessage:
     lock_id: UUID
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class CreateParagraphSessionMessage:
     session_id: UUID
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class UpdateParagraphSessionMessage:
     session_id: UUID
@@ -37,7 +38,7 @@ class UpdateParagraphSessionMessage:
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class DeleteParagraphSessionMessage:
     session_id: UUID
@@ -45,7 +46,8 @@ class DeleteParagraphSessionMessage:
     client_id: UUID
 
 
-@serde
+## Server-to-client messages
+@serde(rename_all="camelcase")
 @dataclass
 class ParagraphGoneSessionMessage:
     session_id: UUID
@@ -54,8 +56,7 @@ class ParagraphGoneSessionMessage:
     deleted_by: UUID
 
 
-## Server-to-client messages
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class InitMessage:
     lock_id: UUID
@@ -63,14 +64,14 @@ class InitMessage:
     locked_by: Optional[UUID] = None
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class ReadyMessage:
     lock_id: UUID
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class BusyMessage:
     lock_id: UUID
@@ -78,21 +79,21 @@ class BusyMessage:
     locked_by: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class FreedMessage:
     lock_id: UUID
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class InitSessionMessage:
     session_id: UUID
     client_id: UUID
 
 
-@serde
+@serde(rename_all="camelcase")
 @dataclass
 class UpdatedParagraphSessionMessage:
     session_id: UUID
@@ -115,34 +116,39 @@ class LeaveMessage:
     client_id: UUID
 
 
-@serde(tagging=AdjacentTagging("type", "content"))
+ClientToServerMessage = Union[
+    FreeMessage,
+    TryMessage,
+    CreateParagraphSessionMessage,
+    UpdateParagraphSessionMessage,
+    DeleteParagraphSessionMessage,
+]
+
+
+@serde(
+    tagging=AdjacentTagging("@type", "@content"),
+    rename_all="camelcase",
+)
 @dataclass
-class ClientToServerMessage:
-    inner: Union[
-        FreeMessage,
-        TryMessage,
-        CreateParagraphSessionMessage,
-        UpdateParagraphSessionMessage,
-        DeleteParagraphSessionMessage,
-    ]
+class ClientToServerMessageWrapper:
+    inner: ClientToServerMessage
 
 
-@serde(tagging=AdjacentTagging("type", "content"))
+ServerToClientMessage = Union[
+    InitMessage,
+    ReadyMessage,
+    BusyMessage,
+    FreedMessage,
+    InitSessionMessage,
+    UpdatedParagraphSessionMessage,
+    ParagraphGoneSessionMessage,
+]
+
+
+@serde(
+    tagging=AdjacentTagging("@type", "@content"),
+    rename_all="camelcase",
+)
 @dataclass
-class ServerToClientMessage:
-    inner: Union[
-        InitMessage,
-        ReadyMessage,
-        BusyMessage,
-        FreedMessage,
-        InitSessionMessage, 
-        UpdatedParagraphSessionMessage, 
-        ParagraphGoneSessionMessage,
-    ]
-
-
-Message = ClientToServerMessage | ServerToClientMessage
-
-
-class ClientDispachableMessage(Protocol):
-    client_id: UUID
+class ServerToClientMessageWrapper:
+    inner: ServerToClientMessage = field(metadata={"serde_rename": "@inner"})

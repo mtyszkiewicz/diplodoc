@@ -8,7 +8,7 @@
     import Paragraph from "./Session/Paragraph.svelte";
     import SmallText from "./SmallText.svelte";
 
-    const SERVER_URL = "ws://192.168.0.84:8887";
+    const SERVER_URL = "ws://192.168.1.10:8887";
 
     function openWebSocket() {
         return new WebSocket(SERVER_URL);
@@ -31,59 +31,59 @@
 
     async function messageDispatcher(msg) {
         let inner = unwrap(JSON.parse(msg.data));
-        let msgType = inner["type"];
-        let content = inner["content"];
+        let msgType = inner["@type"];
+        let content = inner["@content"];
         switch (msgType) {
             case "InitSessionMessage":
-                sessionId = content.session_id;
-                clientId = content.client_id;
+                sessionId = content.sessionId;
+                clientId = content.clientId;
                 putAlert(
                     `Succesfully connected to session ${sessionId} as client ${clientId}.`
                 );
                 break;
             case "InitMessage":
-                locks[content.lock_id] = content;
-                locks[content.lock_id].status = determineLockState(
-                    content.lock_id
+                locks[content.lockId] = content;
+                locks[content.lockId].status = determineLockState(
+                    content.lockId
                 );
-                locks[content.lock_id].trying = false;
+                locks[content.lockId].trying = false;
                 break;
             case "BusyMessage":
-                locks[content.lock_id] = content;
-                locks[content.lock_id].status = "BUSY";
-                if (locks[content.lock_id].trying) {
-                    locks[content.lock_id].trying = false;
-                    putAlert("Another user is editing this document.")
+                locks[content.lockId] = content;
+                locks[content.lockId].status = "BUSY";
+                if (locks[content.lockId].trying) {
+                    locks[content.lockId].trying = false;
+                    putAlert("Another user is editing this document.");
                 }
                 break;
             case "ReadyMessage":
-                locks[content.lock_id].locked_by = clientId;
-                locks[content.lock_id].status = "EDITING";
-                locks[content.lock_id].trying = false;
+                locks[content.lockId].lockedBy = clientId;
+                locks[content.lockId].status = "EDITING";
+                locks[content.lockId].trying = false;
                 break;
             case "FreedMessage":
-                locks[content.lock_id].locked_by = null;
-                locks[content.lock_id].status = "EDITABLE";
+                locks[content.lockId].lockedBy = null;
+                locks[content.lockId].status = "EDITABLE";
                 break;
             case "UpdatedParagraphSessionMessage":
-                paragraphs[content.paragraph_id] = content;
-                if (content.updated_by === clientId) {
+                paragraphs[content.paragraphId] = content;
+                if (content.updatedBy === clientId) {
                     putAlert(
-                        `Paragraph ${content.paragraph_id} saved successfully.`
+                        `Paragraph ${content.paragraphId} saved successfully.`
                     );
                 }
                 break;
             case "ParagraphGoneSessionMessage":
-                delete paragraphs[content.paragraph_id];
+                delete paragraphs[content.paragraphId];
                 paragraphs = paragraphs;
                 if (content.deleted_by === clientId) {
                     putAlert(
-                        `Paragraph ${content.paragraph_id} deleted successfully.`
+                        `Paragraph ${content.paragraphId} deleted successfully.`
                     );
                 }
                 break;
             case "ParagraphGoneSessionMessage":
-                delete paragraphs[content.paragraph_id];
+                delete paragraphs[content.paragraphId];
                 paragraphs = paragraphs;
                 break;
         }
@@ -101,10 +101,10 @@
         ws.send(
             JSON.stringify(
                 wrap({
-                    type: "CreateParagraphSessionMessage",
-                    content: {
-                        session_id: sessionId,
-                        client_id: clientId,
+                    "@type": "CreateParagraphSessionMessage",
+                    "@content": {
+                        sessionId,
+                        clientId,
                     },
                 })
             )
@@ -115,11 +115,11 @@
         ws.send(
             JSON.stringify(
                 wrap({
-                    type: "DeleteParagraphSessionMessage",
-                    content: {
-                        session_id: sessionId,
-                        paragraph_id: evt.detail.paragraphId,
-                        client_id: clientId,
+                    "@type": "DeleteParagraphSessionMessage",
+                    "@content": {
+                        sessionId,
+                        clientId,
+                        paragraphId: evt.detail.paragraphId,
                     },
                 })
             )
@@ -134,10 +134,10 @@
         ws.send(
             JSON.stringify(
                 wrap({
-                    type: "TryMessage",
-                    content: {
-                        lock_id: evt.detail.paragraphId,
-                        client_id: clientId,
+                    "@type": "TryMessage",
+                    "@content": {
+                        clientId,
+                        lockId: evt.detail.paragraphId,
                     },
                 })
             )
@@ -148,12 +148,12 @@
         ws.send(
             JSON.stringify(
                 wrap({
-                    type: "UpdateParagraphSessionMessage",
-                    content: {
-                        session_id: sessionId,
-                        paragraph_id: evt.detail.paragraphId,
+                    "@type": "UpdateParagraphSessionMessage",
+                    "@content": {
+                        sessionId,
+                        clientId,
+                        paragraphId: evt.detail.paragraphId,
                         content: evt.detail.content,
-                        client_id: clientId,
                     },
                 })
             )
@@ -161,10 +161,10 @@
         ws.send(
             JSON.stringify(
                 wrap({
-                    type: "FreeMessage",
-                    content: {
-                        lock_id: evt.detail.paragraphId,
-                        client_id: clientId,
+                    "@type": "FreeMessage",
+                    "@content": {
+                        clientId: clientId,
+                        lockId: evt.detail.paragraphId,
                     },
                 })
             )
@@ -172,11 +172,11 @@
     }
 
     function determineLockState(pid) {
-        if (locks[pid].locked_by === null) {
+        if (locks[pid].lockedBy === null) {
             return "EDITABLE";
         }
 
-        if (locks[pid].locked_by == clientId) {
+        if (locks[pid].lockedBy == clientId) {
             return "EDITING";
         }
 
@@ -194,40 +194,42 @@
 <main>
     <Logo />
     {#if sessionId}
-        {#each Object.keys(paragraphs) as pid (pid)}
-            <Paragraph
-                paragraphId={pid}
-                state={locks[pid].status}
-                content={paragraphs[pid].content}
-                editedBy={locks[pid].locked_by}
-                on:deleteParagraph={deleteParagraph}
-                on:editParagraph={editParagraph}
-                on:saveParagraph={saveParagraph}
-            />
-        {/each}
+        <section
+            class="paragraphs-shadow"
+        >
+            {#each Object.keys(paragraphs) as pid (pid)}
+                <Paragraph
+                    paragraphId={pid}
+                    state={locks[pid].status}
+                    content={paragraphs[pid].content}
+                    editedBy={locks[pid].lockedBy}
+                    on:deleteParagraph={deleteParagraph}
+                    on:editParagraph={editParagraph}
+                    on:saveParagraph={saveParagraph}
+                />
+            {/each}
+        </section>
         <section class="new-paragraph-container">
             <Button on:click={sendCreateParagraphSessionMessage}>
                 <span class="icon">
                     <FaPlus />
                 </span>
-                New paragraph
             </Button>
         </section>
         <SmallText>
-            <br />
             Session ID: {sessionId} <br />
             Client ID: {clientId}
         </SmallText>
     {/if}
-        <section class="alerts">
-            {#each Object.keys(alerts) as ak (ak)}
-                <section class="alert" in:slide out:slide>
-                    <span class="icon">
-                        <FaInfoCircle />
-                    </span>&nbsp;&nbsp;{alerts[ak]}
-                </section>
-            {/each}
-        </section>
+    <section class="alerts">
+        {#each Object.keys(alerts) as ak (ak)}
+            <section class="alert" in:slide out:slide>
+                <span class="icon">
+                    <FaInfoCircle />
+                </span>&nbsp;&nbsp;{alerts[ak]}
+            </section>
+        {/each}
+    </section>
 </main>
 
 <style>
@@ -248,6 +250,17 @@
         flex-direction: column;
         align-items: flex-end;
         justify-items: flex-end;
+    }
+
+    .paragraphs-shadow {
+        border-radius: 0.5rem;
+        box-shadow: 8px 8px 24px 0px rgba(66, 68, 90, 0.4);
+        margin: 0;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        padding: 0;
+        width: 100%;
+        block-size: fit-content;
     }
 
     main {
