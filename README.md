@@ -1,9 +1,6 @@
 <img src="./diplodoc-client/public/diplodocus.png">
 
-# Diplodoc is a document editor
-Diplodoc is a collaborative text document editor created to solidify our academic knowledge and demonstrate the fundamentals of asynchronous applications.
-
-The solution features a client-server architecture, utilizing the Svelte JavaScript framework for the client and Python for the server. The server handles basic locking mechanisms and manages the event loop, ensuring smooth operation. Communication between the front-end and server is achieved through the exchange of serialized messages via WebSockets, enabling a basic level of asynchronous interaction between the components.
+A collaborative document editor with real-time synchronization built as an academic project. The app implements Conflict-free Replicated Data Types (CRDTs) along with custom locking mechanisms and event loop. Built with Svelte for the frontend and Python for the backend, communicating via WebSockets.
 
 # Setup
 
