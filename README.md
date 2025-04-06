@@ -7,8 +7,8 @@ A collaborative document editor with real-time synchronization built as an acade
 ## diplodoc-server
 ```bash
 cd diplodoc-server
-poetry install
-poetry run python3 diplodoc/server.py
+uv sync
+uv run python3 diplodoc/server.py
 ```
 
 ## diplodoc-client

@@ -1,24 +1,26 @@
-[tool.poetry]
+[project]
 name = "diplodoc"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
-authors = ["Marcin Tyszkiewicz <tyszkm@gmail.com>"]
+authors = [{ name = "Marcin Tyszkiewicz", email = "tyszkm@gmail.com" }]
+requires-python = "~=3.9"
+dependencies = [
+    "aiohttp>=3.11.16",
+    "pyserde>=0.23.0",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
+    "rich>=14.0.0",
+]
 
-[tool.poetry.scripts]
+[project.scripts]
 diplodoc-server = "diplodoc.server:main"
 
-[tool.poetry.dependencies]
-python = "^3.9"
-aiohttp = "^3.8.1"
-pyserde = "^0.7.1"
-pytest = "^7.1.1"
-pytest-asyncio = "^0.18.3"
-rich = "^12.4.1"
-
-[tool.poetry.dev-dependencies]
-black = "^22.3.0"
-isort = "^5.10.1"
+[dependency-groups]
+dev = [
+    "black>=22.3.0,<23",
+    "isort>=5.10.1,<6",
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
